@@ -1,0 +1,168 @@
+/*******************************************************************************
+ * Themes
+ ******************************************************************************/
+
+@use "sass:color";
+
+:root {
+  color-scheme: light;
+  // Light mode: warm cream paper, dark forest accents.
+  --global-bg-color: #{$tan-cream};
+  --global-code-bg-color: #{$code-bg-color-light};
+  --global-text-color: #{$forest-text};
+  --global-text-color-light: #{$brown-warm};
+  --global-theme-color: #{$forest};
+  --global-hover-color: #{$forest-soft};
+  --global-hover-text-color: #{$tan-cream};
+  --global-footer-bg-color: #{$forest-deep};
+  --global-footer-text-color: #{$tan-light};
+  --global-footer-link-color: #{$tan-cream};
+  --global-distill-app-color: #{$brown-warm};
+  --global-divider-color: rgba(47, 74, 58, 0.16);
+  --global-card-bg-color: #{$tan-paper};
+  --global-highlight-color: #{$brown-warm};
+  --global-back-to-top-bg-color: rgba(
+    #{color.channel($forest-deep, "red", $space: rgb)},
+    #{color.channel($forest-deep, "green", $space: rgb)},
+    #{color.channel($forest-deep, "blue", $space: rgb)},
+    0.5
+  );
+  --global-back-to-top-text-color: #{$tan-cream};
+  --global-newsletter-bg-color: #{$tan-paper};
+  --global-newsletter-text-color: #{$forest-text};
+
+  --global-tip-block: #4a7a52;
+  --global-tip-block-bg: #e6efde;
+  --global-tip-block-text: #1f3528;
+  --global-tip-block-title: #2f4a3a;
+  --global-warning-block: #b89868;
+  --global-warning-block-bg: #f6ecd6;
+  --global-warning-block-text: #5c4a32;
+  --global-warning-block-title: #8b6f47;
+  --global-danger-block: #a04a3c;
+  --global-danger-block-bg: #f1d8cf;
+  --global-danger-block-text: #5b261a;
+  --global-danger-block-title: #a04a3c;
+
+  #light-toggle-system {
+    padding-left: 10px;
+    padding-top: 12px;
+    display: block;
+  }
+
+  #light-toggle-dark {
+    display: none;
+  }
+
+  #light-toggle-light {
+    display: none;
+  }
+
+  .only-light {
+    display: block;
+  }
+
+  .only-dark {
+    display: none;
+  }
+
+  #back-to-top {
+    color: var(--global-back-to-top-text-color);
+    background: var(--global-back-to-top-bg-color);
+    bottom: $back-to-top-bottom;
+    right: $back-to-top-right;
+    height: $back-to-top-height;
+    width: $back-to-top-width;
+    z-index: $back-to-top-z-index;
+  }
+}
+
+// MLn is a dark venue by design and must not follow the site-wide theme
+// setting — the rest of the site now runs the light zine palette. Aliased
+// onto the real dark block rather than given its own colours, so it keeps
+// exactly the values it has always had. (ringworld pins itself the same way.)
+html[data-theme="dark"],
+html:has(body.mln-site) {
+  color-scheme: dark;
+  // Dark mode: deep forest bg, warm tan/cream accents.
+  --global-bg-color: #{$forest-deep};
+  --global-code-bg-color: #{$code-bg-color-dark};
+  --global-text-color: #{$cream-text};
+  --global-text-color-light: #{$tan-warm};
+  --global-theme-color: #{$tan-light};
+  --global-hover-color: #{$tan-warm};
+  --global-hover-text-color: #{$forest-deep};
+  --global-footer-bg-color: #{$brown-deep};
+  --global-footer-text-color: #{$tan-cream};
+  --global-footer-link-color: #{$tan-light};
+  --global-distill-app-color: #{$tan-warm};
+  --global-divider-color: rgba(216, 196, 160, 0.18);
+  --global-card-bg-color: #{$forest};
+  --global-back-to-top-bg-color: rgba(
+    #{color.channel($tan-light, "red", $space: rgb)},
+    #{color.channel($tan-light, "green", $space: rgb)},
+    #{color.channel($tan-light, "blue", $space: rgb)},
+    0.45
+  );
+  --global-back-to-top-text-color: #{$forest-deep};
+  --global-newsletter-bg-color: #{$forest};
+  --global-newsletter-text-color: #{$cream-text};
+
+  --global-tip-block: #7a9985;
+  --global-tip-block-bg: #2f4a3a;
+  --global-tip-block-text: #e6efde;
+  --global-tip-block-title: #d8c4a0;
+  --global-warning-block: #b89868;
+  --global-warning-block-bg: #5c4a32;
+  --global-warning-block-text: #f6ecd6;
+  --global-warning-block-title: #f1e9d7;
+  --global-danger-block: #b85c4a;
+  --global-danger-block-bg: #5b261a;
+  --global-danger-block-text: #f1d8cf;
+  --global-danger-block-title: #f1d8cf;
+
+  .only-light {
+    display: none;
+  }
+
+  .only-dark {
+    display: block;
+  }
+}
+
+html[data-theme-setting="dark"] {
+  #light-toggle-system {
+    display: none;
+  }
+
+  #light-toggle-dark {
+    padding-left: 10px;
+    padding-top: 12px;
+    display: block;
+  }
+
+  #light-toggle-light {
+    display: none;
+  }
+
+  #back-to-top {
+    color: var(--global-back-to-top-text-color);
+    background: var(--global-back-to-top-bg-color);
+  }
+}
+
+html[data-theme-setting="light"] {
+  #light-toggle-system {
+    display: none;
+  }
+
+  #light-toggle-dark {
+    display: none;
+  }
+
+  #light-toggle-light {
+    padding-left: 10px;
+    padding-top: 12px;
+    display: block;
+  }
+}

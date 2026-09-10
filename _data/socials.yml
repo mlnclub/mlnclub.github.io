@@ -1,0 +1,5 @@
+# metadata.liquid reads these for the Schema.org Organization block. The club
+# has no social accounts of its own — the Luma calendar is its public home, and
+# that lives in _data/mln.yml as `calendar_url`.
+github_username:
+linkedin_username:

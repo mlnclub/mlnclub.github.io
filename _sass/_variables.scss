@@ -1,0 +1,73 @@
+/*******************************************************************************
+ * Variables used throughout the theme.
+ * To adjust anything, simply edit the variables below and rebuild the theme.
+ ******************************************************************************/
+
+@use "sass:color";
+
+// Colors
+$red-color: #ff3636 !default;
+$red-color-dark: #b71c1c !default;
+$orange-color: #f29105 !default;
+$blue-color: #0076df !default;
+$blue-color-dark: #00369f !default;
+$cyan-color: #2698ba !default;
+$light-cyan-color: color.adjust($cyan-color, $lightness: 25%);
+$green-color: #00ab37 !default;
+$green-color-lime: #b7d12a !default;
+$green-color-dark: #009f06 !default;
+$green-color-light: #ddffdd !default;
+$green-color-bright: #11d68b !default;
+$purple-color: #b509ac !default;
+$light-purple-color: color.adjust($purple-color, $lightness: 25%);
+$pink-color: #f92080 !default;
+$pink-color-light: #ffdddd !default;
+$yellow-color: #efcc00 !default;
+
+$grey-color: #828282 !default;
+$grey-color-light: color.adjust($grey-color, $lightness: 40%);
+$grey-color-dark: #1c1c1d;
+$grey-900: #212529;
+
+$white-color: #ffffff !default;
+$black-color: #000000 !default;
+
+// -----------------------------------------------------------------------------
+// Site palette: dark green + light brown (forest & tan).
+// Light mode = warm cream paper with forest accents; dark mode flips to deep
+// forest with tan/cream accents. Both modes carry green AND brown so the pair
+// reads consistently across the site.
+// -----------------------------------------------------------------------------
+$forest-deep:    #1f3329;    // very dark forest, used for dark-mode bg
+$forest:         #2f4a3a;    // primary green, used as accent in light mode
+$forest-soft:    #466654;    // lifted forest for hover/secondary
+$sage:           #7a9985;    // muted sage for divider tints
+
+$tan-cream:      #f1e9d7;    // warm cream paper, light-mode bg
+$tan-paper:      #f8f2e2;    // slightly lighter cream for cards
+$tan-light:      #d8c4a0;    // light brown, dark-mode accent + light-mode highlight
+$tan-warm:       #b89868;    // warm tan, hover in dark mode
+$brown-warm:     #8b6f47;    // saddle brown, secondary accent
+$brown-deep:     #5c4a32;    // espresso brown for footers/contrast
+
+$cream-text:     #ece1c8;    // cream text on dark green bg
+$forest-text:    #2a3a26;    // very dark forest for text on cream
+
+// Theme colors
+
+$code-bg-color-light: rgba($forest, 0.06);
+$code-bg-color-dark: #243329 !default;
+
+// Font awesome location
+$fa-font-path: "../webfonts";
+
+// Tabler icons location
+$ti-font-path: "../fonts";
+
+// Back To Top button config
+$back-to-top-z-index: 10;
+$back-to-top-bottom: 30px;
+$back-to-top-right: 30px;
+$back-to-top-diameter: 40px;
+$back-to-top-height: $back-to-top-diameter;
+$back-to-top-width: $back-to-top-diameter;

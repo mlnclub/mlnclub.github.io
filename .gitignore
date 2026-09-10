@@ -1,0 +1,17 @@
+_site
+.bundle
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+.DS_store
+.ruby-version
+Gemfile.lock
+assets/libs/
+node_modules/
+vendor
+.idea
+.venv
+
+# Season recap reels play from YouTube, not from the repo — only the poster
+# still is committed. A local encode stays on disk, uncommitted.
+/assets/video/mln/*-recap.mp4
