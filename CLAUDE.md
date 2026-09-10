@@ -10,7 +10,7 @@ Two rules before any workflow:
 
 | File | When |
 |---|---|
-| [mln](docs/claude/mln.md) | the whole workflow: Luma sync, new weeks, paper audio, recap photos, seasons, the announcement band |
+| [mln](docs/claude/mln.md) | **start here for any MLn request** — its first section maps what Chris says ("update the MLn", "update for this week", "add this week's photo") onto what to do. Then: Luma sync, new weeks, paper audio, recap photos, seasons, the announcement band |
 | [content-rules](docs/claude/content-rules.md) | any user-facing copy |
 
 This site was split out of Chris's personal site (`czhs/czhs.github.io`) on

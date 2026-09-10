@@ -8,6 +8,31 @@ the landing page + each `/week-N/` page) plus a thin stub `_pages/mln_weekN.md` 
 week. External source of truth: the Luma calendar https://luma.com/mln. All copy is
 **verbatim from Luma** — pull wording from the event, never write blurbs.
 
+## What Chris usually means
+
+He asks for this in a few words — "update the MLn", "update for this week", "add
+this week's photo". Almost always one of:
+
+| He says | Do |
+|---|---|
+| "update the MLn" / "update for this week" / "sync" | [Sync from Luma](#syncing-from-luma-manual-by-request--helper-script-deleted-2026-06-30) → fix up `_data/mln.yml` + stubs → preview → **commit and push** |
+| "add this week's photo" / sends images | [Recap photos](#recap-photos-tags-carousels) — convert, `<figure class="mln-recap">` in the week's stub, add the tag |
+| "add the audio" / drops an mp3 | [Paper audio](#paper-audio-github-release-never-committed) — release upload, `recording:` URL, `paper audio` tag |
+| "this week is X paper" | Re-pull that week from Luma; the topic often changed *in place* on the same event |
+
+**"Update the MLn" includes the push.** It is not finished until it is live —
+`/` shows the stale week as "reading now" to everyone until it ships — so don't
+hand it back uncommitted waiting for a separate "push". This is a deliberate
+carve-out: on Chris's personal site he says "push" explicitly, here he doesn't
+have to.
+
+**Read the week list before deciding which week is "this week."** It is derived
+from `date`, not from `num` — the next meeting is the one flagged "reading now".
+Meetings are on **Sundays** from week 17 onward (Mondays before that).
+
+**Never invent copy.** Titles, summaries and descriptions come verbatim from the
+Luma event. If you must trim, trim to real phrases; don't reword.
+
 ## Architecture
 
 - `_data/mln.yml` — `calendar_url`, `contact_url` (unused since 2026-08-09), `weeks:`
