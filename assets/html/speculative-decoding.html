@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speculative decoding — draft, verify, accept animation</title>
+<style>
+  /* ---- Demo page chrome (delete if embedding) ---- */
+  body{margin:0;padding:2rem 1rem;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+       background:#fafaf7;color:#1a1a18;display:flex;justify-content:center;}
+  @media (prefers-color-scheme:dark){body{background:#1b1b19;color:#ececea;}}
+
+  /* ================= COMPONENT: scoped under #spec-viz ================= */
+  #spec-viz{
+    --bg-primary:#ffffff;--bg-secondary:#f3f2ec;
+    --text-primary:#1a1a18;--text-secondary:#5f5e5a;--text-tertiary:#8a8980;
+    --border:#e2e0d8;--border-strong:#cac8be;--radius:8px;
+    --k0b:#EEEDFE;--k0t:#3C3489;--k0e:#7F77DD;   /* target model M_p */
+    --k1b:#E1F5EE;--k1t:#0F6E56;--k1e:#1D9E75;   /* draft model M_q  */
+    --k2b:#FAECE7;--k2t:#993C1D;--k2e:#D85A30;   /* rejected          */
+    max-width:680px;margin:0 auto;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    color:var(--text-primary);line-height:1.5;font-variant-numeric:tabular-nums;
+  }
+  @media (prefers-color-scheme:dark){
+    #spec-viz{
+      --bg-primary:#2a2a27;--bg-secondary:#232320;
+      --text-primary:#ececea;--text-secondary:#b4b2a9;--text-tertiary:#888780;
+      --border:#3a3a36;--border-strong:#4a4a45;
+      --k0b:#3C3489;--k0t:#CECBF6;--k0e:#7F77DD;
+      --k1b:#085041;--k1t:#9FE1CB;--k1e:#1D9E75;
+      --k2b:#712B13;--k2t:#F5C4B3;--k2e:#D85A30;
+    }
+  }
+  #spec-viz *{box-sizing:border-box;}
+  #spec-viz button{
+    font:inherit;font-size:14px;padding:7px 12px;border:0.5px solid var(--border-strong);
+    background:transparent;color:var(--text-primary);border-radius:var(--radius);cursor:pointer;
+    transition:background .15s,transform .05s;
+  }
+  #spec-viz button:hover{background:var(--bg-secondary);}
+  #spec-viz button:active{transform:scale(0.98);}
+  #spec-viz input[type=range]{accent-color:var(--k0e);cursor:pointer;}
+  #spec-viz .lbl{font-size:12px;color:var(--text-secondary);margin:0 0 6px;}
+  #spec-viz .key{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary);}
+  #spec-viz .dot{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none;}
+  #spec-viz .cell{border:0.5px solid var(--border);border-radius:var(--radius);
+    background:var(--bg-primary);position:relative;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;min-height:64px;padding:6px 5px;text-align:center;}
+  #spec-viz .cell.empty{border-style:dashed;background:transparent;color:var(--border-strong);font-size:18px;}
+  #spec-viz .cell.mute{opacity:.45;}
+  #spec-viz .lanewrap{overflow-x:auto;}
+  #spec-viz .lanes{display:grid;grid-template-columns:repeat(4,minmax(112px,1fr));gap:8px;min-width:472px;}
+  #spec-viz .tok{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;
+    border:0.5px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);
+    font-size:14px;font-weight:500;line-height:1.35;white-space:nowrap;}
+  #spec-viz .tape{display:flex;flex-wrap:wrap;gap:6px;min-height:30px;align-items:center;}
+  #spec-viz .big{font-size:20px;font-weight:500;line-height:1.1;}
+  #spec-viz .sm{font-size:11px;color:var(--text-secondary);margin-top:3px;line-height:1.3;}
+  #spec-viz .dist{border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg-primary);
+    padding:8px 10px 6px;min-height:150px;margin-top:14px;overflow-x:auto;}
+  #spec-viz table{border-collapse:collapse;width:100%;font-size:12px;}
+  #spec-viz th{font-weight:500;color:var(--text-secondary);text-align:left;padding:2px 6px;border-bottom:0.5px solid var(--border);white-space:nowrap;}
+  #spec-viz td{padding:3px 6px;vertical-align:middle;white-space:nowrap;}
+  #spec-viz tr.pick td{background:var(--k0b);}
+  #spec-viz tr.pick td:first-child{border-radius:6px 0 0 6px;}
+  #spec-viz tr.pick td:last-child{border-radius:0 6px 6px 0;}
+  #spec-viz .bar{display:inline-block;height:6px;border-radius:2px;vertical-align:middle;margin-left:6px;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+</style>
+</head>
+<body>
+
+<div id="spec-viz">
+  <h2 class="sr-only">Animated speculative decoding: a draft model guesses three tokens, the target model scores all of them in one parallel pass, and each guess is accepted or rejected in turn, one step at a time.</h2>
+
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+    <button id="play" style="min-width:84px;">&#9654; Play</button>
+    <button id="back">&#9664; Step</button>
+    <button id="fwd">Step &#9654;</button>
+    <button id="reset">Reset</button>
+    <span style="font-size:14px;color:var(--text-secondary);margin-left:4px;">Step</span>
+    <span id="stp" style="font-size:20px;font-weight:500;min-width:18px;">0</span>
+    <span style="font-size:14px;color:var(--text-secondary);margin-left:4px;">Round</span>
+    <span id="rnd" style="font-size:20px;font-weight:500;min-width:18px;">&ndash;</span>
+    <span style="flex:1;"></span>
+    <span style="font-size:12px;color:var(--text-secondary);">slow</span>
+    <input id="spd" type="range" min="250" max="1400" step="50" value="850" style="width:90px;">
+    <span style="font-size:12px;color:var(--text-secondary);">fast</span>
+  </div>
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+    <p class="lbl">Output so far <span style="color:var(--text-tertiary);">&middot; always distributed exactly like <b style="color:var(--text-primary);font-weight:500;">M<sub>p</sub></b> alone</span></p>
+    <p class="lbl" id="stats" style="color:var(--text-tertiary);"></p>
+  </div>
+  <div id="tape" class="tape"></div>
+
+  <div class="lanewrap" style="margin-top:14px;">
+    <div style="min-width:472px;">
+      <p class="lbl">Draft <b style="color:var(--text-primary);font-weight:500;">M<sub>q</sub></b> guesses &rarr; &nbsp;&gamma; = 3 tokens, one sequential pass each</p>
+      <div id="draft" class="lanes"></div>
+      <p class="lbl" style="margin-top:10px;">Target <b style="color:var(--text-primary);font-weight:500;">M<sub>p</sub></b> scores &darr; &nbsp;every position, one parallel pass</p>
+      <div id="target" class="lanes"></div>
+      <p class="lbl" style="margin-top:10px;">Accept guess <i>i</i> if &nbsp;r<sub>i</sub> &le; min(1, p<sub>i</sub>/q<sub>i</sub>)&nbsp; with r<sub>i</sub> ~ U(0,1) &middot; stop at the first rejection</p>
+      <div id="verdict" class="lanes"></div>
+    </div>
+  </div>
+
+  <div id="dist" class="dist"></div>
+
+  <div style="display:flex;gap:16px;margin:14px 0 10px;flex-wrap:wrap;">
+    <span class="key"><span class="dot" style="background:var(--k1e);"></span><span>guessed by the draft M<sub>q</sub></span></span>
+    <span class="key"><span class="dot" style="background:var(--k0e);"></span><span>sampled from the target M<sub>p</sub> (bonus or correction)</span></span>
+    <span class="key"><span class="dot" style="background:var(--k2e);"></span><span>rejected, with everything after it</span></span>
+  </div>
+
+  <div id="readout" style="min-height:48px;font-size:14px;line-height:1.6;color:var(--text-secondary);
+       border-top:0.5px solid var(--border);padding-top:10px;"></div>
+</div>
+
+<script>
+(function(){
+  if(window.self!==window.top) document.body.style.padding='12px 8px';  /* embedded: drop the demo-page margin */
+  const root=document.getElementById('spec-viz');
+  const $=s=>root.querySelector(s);
+  const G=3;
+  const PREFIX=['The','cat','sat','on','the'];
+  // Toy numbers: q_i = draft prob of its own guess, p_i = target prob of that same guess.
+  // r_i are the uniform draws, fixed so the story replays the same way every time.
+  const ROUNDS=[
+    { drafts:[{tok:'mat',q:.62,p:.70},{tok:'and',q:.40,p:.30},{tok:'purred',q:.35,p:.55}],
+      r:[.23,.41,.88],
+      next:{vocab:[{tok:'softly',p:.44},{tok:'loudly',p:.21},{tok:'again',p:.20},{tok:'.',p:.15}],pick:'softly'} },
+    { drafts:[{tok:',',q:.50,p:.55},{tok:'then',q:.30,p:.06},{tok:'fell',q:.45,p:.20}],
+      r:[.67,.63,.12],
+      next:{vocab:[{tok:'asleep',p:.52},{tok:'silent',p:.18},{tok:'over',p:.17},{tok:'down',p:.13}],pick:null},
+      resid:{vocab:[{tok:'then',q:.30,p:.06},{tok:'as',q:.25,p:.48},{tok:'while',q:.20,p:.30},{tok:'the',q:.25,p:.16}],pick:'as'} },
+    { drafts:[{tok:'it',q:.55,p:.10},{tok:'always',q:.20,p:.35},{tok:'did',q:.60,p:.40}],
+      r:[.52,.30,.44],
+      next:{vocab:[{tok:'.',p:.46},{tok:',',p:.24},{tok:'before',p:.18},{tok:'when',p:.12}],pick:null},
+      resid:{vocab:[{tok:'it',q:.55,p:.10},{tok:'the',q:.20,p:.50},{tok:'if',q:.15,p:.28},{tok:'she',q:.10,p:.12}],pick:'the'} },
+  ];
+  ROUNDS.forEach(R=>{
+    R.acc=R.drafts.map(d=>Math.min(1,d.p/d.q));
+    R.n=G; for(let i=0;i<G;i++){ if(R.r[i]>R.acc[i]){R.n=i;break;} }
+    if(R.resid){
+      const Z=R.resid.vocab.reduce((s,v)=>s+Math.max(0,v.p-v.q),0);
+      R.resid.vocab.forEach(v=>{v.d=Math.max(0,v.p-v.q);v.pp=v.d/Z;});
+    }
+    R.tokens=R.drafts.slice(0,R.n).map(d=>({tok:d.tok,c:'acc'}));
+    R.tokens.push({tok:R.n===G?R.next.pick:R.resid.pick,c:'tgt'});
+  });
+
+  const STEPS=[{type:'start'}];
+  ROUNDS.forEach((R,k)=>{
+    for(let i=0;i<G;i++) STEPS.push({type:'draft',k,i});
+    STEPS.push({type:'verify',k});
+    for(let i=0;i<=Math.min(R.n,G-1);i++) STEPS.push({type:'check',k,i});
+    STEPS.push({type:'sample',k});
+    STEPS.push({type:'commit',k});
+  });
+  STEPS.push({type:'end'});
+  const MAX=STEPS.length-1;
+  let t=0, timer=null, playing=false;
+
+  const C={acc:['--k1b','--k1t','--k1e'],tgt:['--k0b','--k0t','--k0e'],rej:['--k2b','--k2t','--k2e']};
+  const f=x=>x>=1?'1':(x<=0?'0':x.toFixed(2).replace(/^0/,''));
+  function chip(tok,c,ring,strike){
+    if(!c) return `<span class="tok">${tok}</span>`;
+    const [b,tc,e]=C[c];
+    return `<span class="tok" style="background:var(${b});color:var(${tc});border-color:var(${e});${ring?'box-shadow:0 0 0 2px var('+e+');':''}${strike?'text-decoration:line-through;opacity:.8;':''}">${tok}</span>`;
+  }
+  const ringOf=e=>`box-shadow:0 0 0 2px var(${e});border-color:var(${e});`;
+
+  function view(t){
+    const s=STEPS[t], v={s,t,k:-1};
+    v.tape=PREFIX.map(x=>({tok:x,c:''}));
+    if(s.type==='start'){v.tp=0;v.dp=0;return v;}
+    const k=s.type==='end'?ROUNDS.length-1:s.k, R=ROUNDS[k];
+    const late=(s.type==='sample'||s.type==='commit'||s.type==='end');
+    v.k=k; v.R=R;
+    v.drafts=s.type==='draft'?s.i+1:G;
+    v.verified=s.type!=='draft';
+    v.checks=s.type==='check'?s.i+1:(late?Math.min(R.n,G-1)+1:0);
+    v.rejected=R.n<G&&v.checks>R.n;
+    v.sampled=late;
+    v.committed=(s.type==='commit'||s.type==='end');
+    for(let j=0;j<k;j++) ROUNDS[j].tokens.forEach(x=>v.tape.push({tok:x.tok,c:x.c}));
+    if(v.committed) R.tokens.forEach(x=>v.tape.push({tok:x.tok,c:x.c,ring:s.type==='commit'}));
+    v.tp=k+(v.verified?1:0);
+    v.dp=k*G+v.drafts;
+    return v;
+  }
+
+  function renderTape(v){
+    $('#tape').innerHTML=v.tape.map(x=>chip(x.tok,x.c,x.ring)).join('');
+    const n=v.tape.length-PREFIX.length;
+    $('#stats').innerHTML=v.k<0?'':`${v.tp} target pass${v.tp===1?'':'es'} &middot; ${v.dp} draft pass${v.dp===1?'':'es'} &middot; ${n} new token${n===1?'':'s'}`;
+  }
+
+  function renderLanes(v){
+    const s=v.s, R=v.R;
+    let d='', p='', c='';
+    const empty=(txt)=>`<div class="cell empty">${txt||'&middot;'}</div>`;
+    for(let i=0;i<G;i++){
+      /* draft row */
+      if(v.k<0||i>=v.drafts) d+=empty();
+      else{
+        const D=R.drafts[i], isRej=v.rejected&&i===R.n, isDis=v.rejected&&i>R.n;
+        d+=`<div class="cell${isDis?' mute':''}">${chip(D.tok,(isRej||isDis)?'rej':'acc',s.type==='draft'&&s.i===i,isRej||isDis)}<span class="sm">q<sub>${i+1}</sub> = ${f(D.q)}${isDis?' &middot; discarded':''}</span></div>`;
+      }
+      /* target row */
+      if(v.k<0||!v.verified) p+=empty();
+      else{
+        const D=R.drafts[i], isDis=v.rejected&&i>R.n;
+        p+=`<div class="cell${isDis?' mute':''}" style="${s.type==='verify'?ringOf('--k0e'):''}"><span class="big" style="color:var(--k0t);">${f(D.p)}</span><span class="sm">p<sub>${i+1}</sub>(&ldquo;${D.tok}&rdquo;)</span></div>`;
+      }
+      /* verdict row */
+      if(v.k<0||i>=v.checks) c+=(v.k>=0&&v.rejected&&i>R.n)?`<div class="cell empty mute"><span class="sm">unused</span></div>`:empty();
+      else{
+        const D=R.drafts[i], ok=i<R.n, [b,tc,e]=ok?C.acc:C.rej;
+        let inner=`<span class="sm" style="color:var(${tc});">min(1, ${f(D.p)}/${f(D.q)}) = ${f(R.acc[i])}</span>`+
+                  `<span class="sm" style="color:var(${tc});margin-top:1px;">r<sub>${i+1}</sub> = ${f(R.r[i])} ${ok?'&le;':'&gt;'} ${f(R.acc[i])}</span>`+
+                  `<span style="font-size:14px;font-weight:500;color:var(${tc});margin-top:2px;">${ok?'&#10003; accept':'&#10007; reject'}</span>`;
+        if(!ok&&v.sampled) inner+=`<span class="sm" style="margin-top:5px;">resampled &rarr;</span>${chip(R.resid.pick,'tgt',s.type==='sample')}`;
+        c+=`<div class="cell" style="background:var(${b});border-color:var(${e});${(s.type==='check'&&s.i===i)?'box-shadow:0 0 0 2px var('+e+');':''}">${inner}</div>`;
+      }
+    }
+    /* fourth column: the slot after the last guess */
+    d+=empty('<span class="sm">no guess &middot; slot 4</span>');
+    if(v.k<0||!v.verified) p+=empty();
+    else p+=`<div class="cell${v.rejected?' mute':''}" style="${s.type==='verify'?ringOf('--k0e'):''}"><span class="big" style="color:var(--k0t);">p<sub>4</sub></span><span class="sm">a whole distribution</span></div>`;
+    if(v.k>=0&&v.sampled&&R.n===G) c+=`<div class="cell" style="background:var(--k0b);border-color:var(--k0e);${s.type==='sample'?'box-shadow:0 0 0 2px var(--k0e);':''}"><span class="sm" style="color:var(--k0t);">all ${G} stood &rarr; bonus</span>${chip(R.next.pick,'tgt',false)}</div>`;
+    else if(v.k>=0&&v.rejected) c+=`<div class="cell empty mute"><span class="sm">unused</span></div>`;
+    else c+=empty();
+    $('#draft').innerHTML=d; $('#target').innerHTML=p; $('#verdict').innerHTML=c;
+  }
+
+  function renderDist(v){
+    const s=v.s, R=v.R, el=$('#dist');
+    if(v.k<0||!v.verified){
+      el.innerHTML=`<p class="lbl" style="margin:0;color:var(--text-tertiary);">Once the target pass has run, the distribution the next new token is drawn from appears here.</p>`;
+      return;
+    }
+    const bar=(x,col)=>`<span class="bar" style="width:${Math.round(x*56)}px;background:var(${col});"></span>`;
+    if(!v.rejected){
+      const pick=(v.sampled&&R.n===G)?R.next.pick:null;
+      let h=`<p class="lbl" style="margin-bottom:4px;">Slot 4 &middot; <b style="color:var(--k0t);font-weight:500;">p<sub>4</sub></b> from the target &mdash; no guess to check, so if every guess stands it is sampled directly</p>`;
+      h+='<table><tr><th>token</th><th>p<sub>4</sub></th><th></th></tr>';
+      R.next.vocab.forEach(x=>{const on=x.tok===pick;
+        h+=`<tr${on?' class="pick"':''}><td>${chip(x.tok,on?'tgt':'')}</td><td>${f(x.p)}${bar(x.p,'--k0e')}</td><td style="color:var(--k0t);">${on?'&larr; sampled':''}</td></tr>`;});
+      el.innerHTML=h+'</table>'; return;
+    }
+    const n=R.n, D=R.drafts[n];
+    let h=`<p class="lbl" style="margin-bottom:4px;">Slot ${n+1} &middot; &ldquo;${D.tok}&rdquo; rejected &rarr; resample from <b style="color:var(--k0t);font-weight:500;">p&prime; = norm(max(0, p<sub>${n+1}</sub> &minus; q<sub>${n+1}</sub>))</b></p>`;
+    h+=`<table><tr><th>token</th><th>q (draft)</th><th>p (target)</th><th>max(0, p &minus; q)</th><th>p&prime;</th></tr>`;
+    R.resid.vocab.forEach(x=>{const on=v.sampled&&x.tok===R.resid.pick, isRej=x.tok===D.tok;
+      h+=`<tr${on?' class="pick"':''}><td>${chip(x.tok,on?'tgt':(isRej?'rej':''),false,isRej)}</td>`+
+         `<td>${f(x.q)}${bar(x.q,'--k1e')}</td><td>${f(x.p)}${bar(x.p,'--k0e')}</td><td>${f(x.d)}${bar(x.d,'--k0e')}</td>`+
+         `<td>${v.sampled?f(x.pp)+bar(x.pp,'--k0e')+(on?' <span style="color:var(--k0t);">&larr; sampled</span>':''):'<span style="color:var(--border-strong);">&middot;</span>'}</td></tr>`;});
+    el.innerHTML=h+'</table>';
+  }
+
+  function renderReadout(v){
+    const s=v.s, R=v.R, el=$('#readout');
+    const q=x=>`&ldquo;${x}&rdquo;`, hi=x=>`<b style="color:var(--text-primary);font-weight:500;">${x}</b>`;
+    switch(s.type){
+      case 'start':
+        el.innerHTML=`A prefix is on the tape. The draft model M<sub>q</sub> will guess &gamma; = 3 tokens ahead, one pass each; then the target M<sub>p</sub> checks all of them in a single pass.`; break;
+      case 'draft':{const D=R.drafts[s.i];
+        el.innerHTML=`Draft pass ${s.i+1}: M<sub>q</sub> reads the prefix plus its own guesses so far and samples ${hi(q(D.tok))} with q<sub>${s.i+1}</sub> = ${f(D.q)}.`; break;}
+      case 'verify':
+        el.innerHTML=`One target pass: M<sub>p</sub> scores every position at once &mdash; p<sub>i</sub> for each guess, plus a full distribution p<sub>4</sub> for the slot after the last guess. ${hi('Three guesses, one forward pass')} &mdash; this is where the speedup comes from.`; break;
+      case 'check':{const D=R.drafts[s.i], ok=s.i<R.n;
+        if(ok) el.innerHTML=`Position ${s.i+1}: r = ${f(R.r[s.i])} &le; min(1, p/q) = ${f(R.acc[s.i])} &rarr; ${hi(q(D.tok)+' accepted')}.${R.acc[s.i]>=1?' When the target likes a guess at least as much as the draft did, it always passes.':''}`;
+        else el.innerHTML=`Position ${s.i+1}: r = ${f(R.r[s.i])} &gt; min(1, p/q) = ${f(R.acc[s.i])} &rarr; ${hi(q(D.tok)+' rejected')}, and every guess after it is thrown away.`; break;}
+      case 'sample':
+        if(R.n===G) el.innerHTML=`Every guess stood, so the target&rsquo;s own p<sub>4</sub> supplies one more token for free: ${hi(q(R.next.pick))}. ${hi((G+1)+' tokens from one target pass')}.`;
+        else el.innerHTML=`Resample slot ${R.n+1} from p&prime; = norm(max(0, p &minus; q)): only tokens the target wanted ${hi('more')} than the draft offered keep any mass &rarr; ${hi(q(R.resid.pick))}. This correction is what makes the output distribution exactly M<sub>p</sub>&rsquo;s.`; break;
+      case 'commit':
+        el.innerHTML=`Round ${s.k+1} done: ${R.n} accepted + 1 from the target = ${hi((R.n+1)+' token'+(R.n?'s':''))} for 1 target pass and ${G} draft passes.`; break;
+      case 'end':{const tot=ROUNDS.reduce((a,R)=>a+R.tokens.length,0);
+        el.innerHTML=`Done. ${hi(ROUNDS.length+' target passes produced '+tot+' tokens')}; decoding one token per pass would have needed ${tot}. The gain depends on how often the draft&rsquo;s guesses are accepted (&alpha;) and how cheap a draft pass is next to a target pass.`; break;}
+    }
+  }
+
+  function render(){
+    const v=view(t);
+    $('#stp').textContent=t;
+    $('#rnd').innerHTML=v.k<0?'&ndash;':`${v.k+1}<span style="font-size:12px;color:var(--text-tertiary);font-weight:400;">/${ROUNDS.length}</span>`;
+    renderTape(v);renderLanes(v);renderDist(v);renderReadout(v);
+  }
+  function step(d){t=Math.max(0,Math.min(MAX,t+d));render();if(t>=MAX)stop();}
+  function start(){playing=true;$('#play').innerHTML='&#10074;&#10074; Pause';
+    const ms=1450-Number($('#spd').value);
+    timer=setInterval(()=>{if(t>=MAX){stop();return;}step(1);},ms);}
+  function stop(){playing=false;$('#play').innerHTML='&#9654; Play';if(timer)clearInterval(timer);timer=null;}
+
+  $('#play').onclick=()=>{if(playing)stop();else{if(t>=MAX){t=0;render();}start();}};
+  $('#fwd').onclick=()=>{stop();step(1);};
+  $('#back').onclick=()=>{stop();step(-1);};
+  $('#reset').onclick=()=>{stop();t=0;render();};
+  $('#spd').oninput=()=>{if(playing){stop();start();}};
+  render();
+})();
+</script>
+
+</body>
+</html>
