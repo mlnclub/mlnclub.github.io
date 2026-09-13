@@ -18,7 +18,7 @@
     --k0b:#EEEDFE;--k0t:#3C3489;--k0e:#7F77DD;   /* target model M_p */
     --k1b:#E1F5EE;--k1t:#0F6E56;--k1e:#1D9E75;   /* draft model M_q  */
     --k2b:#FAECE7;--k2t:#993C1D;--k2e:#D85A30;   /* rejected          */
-    max-width:680px;margin:0 auto;
+    max-width:680px;margin:0 auto;min-width:0;width:100%;  /* flex item: allow shrinking so the inner overflow-x wrappers scroll instead of the body */
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     color:var(--text-primary);line-height:1.5;font-variant-numeric:tabular-nums;
   }
@@ -121,6 +121,11 @@
 <script>
 (function(){
   if(window.self!==window.top) document.body.style.padding='12px 8px';  /* embedded: drop the demo-page margin */
+  /* embedded: tell the host page how tall we are so the iframe can grow to fit (the stub listens) */
+  if(window.self!==window.top && 'ResizeObserver' in window){
+    const post=()=>parent.postMessage({mlnViz:location.pathname,h:Math.ceil(document.body.getBoundingClientRect().height)},'*');
+    new ResizeObserver(post).observe(document.body); window.addEventListener('load',post);
+  }
   const root=document.getElementById('spec-viz');
   const $=s=>root.querySelector(s);
   const G=3;
@@ -130,7 +135,7 @@
   const ROUNDS=[
     { drafts:[{tok:'mat',q:.62,p:.70},{tok:'and',q:.40,p:.30},{tok:'purred',q:.35,p:.55}],
       r:[.23,.41,.88],
-      next:{vocab:[{tok:'softly',p:.44},{tok:'loudly',p:.21},{tok:'again',p:.20},{tok:'.',p:.15}],pick:'softly'} },
+      next:{vocab:[{tok:'softly',p:.44},{tok:'loudly',p:.22},{tok:'again',p:.20},{tok:'.',p:.15}],pick:'softly'} },
     { drafts:[{tok:',',q:.50,p:.55},{tok:'then',q:.30,p:.06},{tok:'fell',q:.45,p:.20}],
       r:[.67,.63,.12],
       next:{vocab:[{tok:'asleep',p:.52},{tok:'silent',p:.18},{tok:'over',p:.17},{tok:'down',p:.13}],pick:null},
