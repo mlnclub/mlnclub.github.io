@@ -352,7 +352,7 @@ weeks:
     slug: "srsz8rga"
     evt: "evt-v89wbXHXDCt5bik"
     date: "2026-09-13"
-    tags: ["visualization"]
+    tags: ["photos"]
     title: "Speculative Decoding"
     cover: "https://images.lumacdn.com/gallery-images/s2/572c40d4-57a2-4b79-9de9-cf00ae2bd737.png"
     summary: "This week, we’re diving into speculative decoding, one of the key techniques behind modern high-throughput LLM inference. The core problem is simple: autoregressive decoding is inherently sequential—generating K tokens normally requires K serial runs of the model. Speculative decoding instead uses a smaller, faster draft model to propose several tokens ahead, then verifies those proposals in parallel with the larger target model. Crucially, the algorithm can accelerate generation without changing the target model’s output distribution."
