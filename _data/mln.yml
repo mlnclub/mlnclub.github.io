@@ -367,6 +367,8 @@ weeks:
     reading:
       - title: "Fast Inference from Transformers via Speculative Decoding — Leviathan, Kalman, Matias (Google Research)"
         url: "https://arxiv.org/pdf/2211.17192"
+      - title: "Looking back at speculative decoding — Leviathan, Kalman, Matias (Google Research blog; you might want to read this first)"
+        url: "https://research.google/blog/looking-back-at-speculative-decoding"
   - num: 18
     slug: "4uzwjunv"
     evt: "evt-yKmrA4UWyIo1FT1"
